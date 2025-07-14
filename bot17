@@ -1,0 +1,31 @@
+def calculate_units(data):
+    # Get account information
+    headers = {
+        "Authorization": f"Bearer {API_KEY}",
+        "Content-Type": "application/json"
+    }
+    account_info = requests.get(f"{BASE_URL}/accounts/{ACCOUNT_ID}", 
+                              headers=headers).json()
+    
+    # Use Net Asset Value (includes unrealized PnL)
+    nav = float(account_info['account']['NAV'])
+    
+    # Get risk percentage from TradingView alert
+    risk_percent = float(data.get('risk_percent', 3.0))  # Default to 3% if not provided
+    
+    # Calculate risk amount (3% of NAV)
+    risk_amount = nav * (risk_percent / 100.0)
+    
+    # Calculate price difference
+    entry_price = float(data['price'])
+    stop_loss_price = float(data['sl'])
+    price_diff = abs(entry_price - stop_loss_price)
+    
+    # Calculate position size
+    units = risk_amount / price_diff
+    
+    # For forex pairs: 1 unit = 1 base currency
+    # Round to nearest 1000 (micro lots)
+    units = int(round(units, -3))
+    
+    return str(units)
